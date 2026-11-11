@@ -1,6 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
-/// Eventos avaliados na atividade. Os nomes aparecem no relatório
+/// Eventos enviados ao Analytics. Os nomes aparecem no relatório
 /// Tempo real do GA4 exatamente como estão aqui.
 class AnalyticsService {
   AnalyticsService._();

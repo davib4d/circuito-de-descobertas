@@ -3,8 +3,6 @@
 Sistema para incentivar a circulação de visitantes no Amazon Hacking: a organização cadastra estandes e
 lança uma missão surpresa; os visitantes recebem a missão no app e registram a visita lendo o QR code do estande.
 
-Atividade prática de Laboratório de Programação Mobile (CESUPA).
-
 | Parte | Tecnologia | Pasta |
 |---|---|---|
 | Painel web da organização | HTML, CSS e JavaScript (SDK web do Firebase por CDN, sem build) | `web-admin/` |
@@ -12,6 +10,7 @@ Atividade prática de Laboratório de Programação Mobile (CESUPA).
 | Dados e acesso | Cloud Firestore e Firebase Authentication | `firestore.rules` |
 | Missão surpresa | Firebase Remote Config com atualização em tempo real | `remoteconfig.template.json` |
 | Medição | Google Analytics para Firebase (GA4) | `app/lib/services/analytics_service.dart` |
+| Preparação e build do app | Script Dart (gera `android/`, verifica e compila) | `tools/preparar.dart` |
 | Distribuição | Firebase App Distribution | `tools/distribuir.sh` |
 
 Tudo funciona no plano Spark, sem cartão.
@@ -111,17 +110,23 @@ No painel vazio há um botão **Criar 3 estandes de exemplo** (E01, E02 e E03).
 
 ### 5. App Flutter
 
-Siga `docs/android.md` (gera a pasta `android/`, roda o `flutterfire configure` e configura a assinatura). Resumo:
+A partir da raiz do repositório:
+
+```bash
+dart tools/preparar.dart
+```
+
+O script gera a pasta `app/android/` (se ainda não existir), baixa as dependências e roda
+`flutter analyze` e `flutter test`. Depois ligue o app ao projeto Firebase e rode no celular:
 
 ```bash
 cd app
-flutter create . --platforms=android --org br.cesupa --project-name circuito_descobertas
-flutter pub get
 dart pub global activate flutterfire_cli
 flutterfire configure --platforms=android
-flutter test
 flutter run
 ```
+
+Os detalhes de cada etapa estão em `docs/android.md`.
 
 ### 6. Remote Config
 
@@ -133,13 +138,19 @@ firebase deploy --only remoteconfig
 
 Opção B, pelo console: **Remote Config → Criar configuração** e adicione os parâmetros da tabela acima.
 
-Para a demonstração: mude `missao_ativa` para `true`, ajuste `missao_estandes` e clique em **Publicar alterações**.
+Para ligar a missão: mude `missao_ativa` para `true`, ajuste `missao_estandes` e clique em **Publicar alterações**.
 O app aberto recebe a mudança em poucos segundos, sem reiniciar. No painel web, o bloco “Missão surpresa”
 monta o valor de `missao_estandes` para você copiar.
 
 ### 7. APK assinado e App Distribution
 
-Passos 3 a 6 de `docs/android.md`.
+```bash
+dart tools/preparar.dart apk
+```
+
+Cria a chave de assinatura na primeira vez, gera o APK de release assinado em
+`app/build/app/outputs/flutter-apk/app-release.apk` e mostra o certificado. O envio para os testadores
+está na seção 5 de `docs/android.md`.
 
 ### 8. Analytics
 
@@ -147,8 +158,8 @@ Os eventos saem do app instalado normalmente. Abra **Analytics → Relatórios �
 **Contagem de eventos por Nome do evento** aparecem `missao_aberta` e `checkin_concluido`. Clique em
 `checkin_concluido` → `estande_id` para ver o valor (ex.: `E03`).
 
-Os eventos podem levar de alguns segundos a alguns minutos. Só para testar mais rápido antes de gravar,
-dá para ativar o modo de depuração e acompanhar pelo **DebugView**:
+Os eventos podem levar de alguns segundos a alguns minutos. Para acompanhar na hora, ative o modo de
+depuração e use o **DebugView**:
 
 ```bash
 adb shell setprop debug.firebase.analytics.app br.cesupa.circuito_descobertas
@@ -156,24 +167,9 @@ adb shell setprop debug.firebase.analytics.app br.cesupa.circuito_descobertas
 adb shell setprop debug.firebase.analytics.app .none.
 ```
 
-## Roteiro do vídeo
+## Onde cada funcionalidade está
 
-1. **App Distribution (1,0)**: apresente os integrantes. Mostre o APK assinado, o envio no console, o convite
-   chegando no Android, a instalação e o app abrindo.
-2. **Painel + app**: cadastre um estande no painel e mostre que ele aparece no app sem recarregar. Abra o QR code.
-3. **Remote Config (1,0)**: com o app aberto e a missão desligada, publique `missao_ativa = true`. A chamada e os
-   destaques aparecem no mesmo app. Abra a missão, leia o QR code, mostre o total subindo no painel.
-   Publique `missao_ativa = false` e mostre a chamada sumindo; a lista e o check-in continuam funcionando.
-4. **Analytics (1,0)**: no Tempo real do GA4, mostre `missao_aberta` e `checkin_concluido` e abra o
-   `estande_id` do check-in.
-5. **Demonstração integrada (0,5)**: os itens 2 a 4 em sequência já fecham o percurso completo.
-
-Vale mostrar também os retornos do leitor: ler o mesmo QR de novo (“Visita já registrada”), desativar um estande
-no painel e ler o QR dele (“Estande inativo”) e ler um QR qualquer (“QR code inválido”).
-
-## Onde cada requisito da lauda está
-
-| Requisito | Onde |
+| Funcionalidade | Onde |
 |---|---|
 | Autenticar administrador | `web-admin/app.js` (login por e-mail e senha + checagem em `admins/`) |
 | Cadastrar e editar estandes (nome, descrição, localização, ativo) | `web-admin/app.js`, diálogo “Cadastrar estande” |

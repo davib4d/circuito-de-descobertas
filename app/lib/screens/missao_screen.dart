@@ -20,7 +20,7 @@ class _MissaoScreenState extends State<MissaoScreen> {
   @override
   void initState() {
     super.initState();
-    // Evento avaliado: abertura da missão.
+    // Registra a abertura da missão no Analytics.
     AnalyticsService.instance
         .missaoAberta(quantidadeDeEstandes: _store.estandesDaMissao.length)
         .catchError((Object _) {});
