@@ -1,0 +1,24 @@
+{
+  "parameters": {
+    "missao_ativa": {
+      "defaultValue": { "value": "false" },
+      "description": "Liga ou desliga a missão surpresa no app do visitante.",
+      "valueType": "BOOLEAN"
+    },
+    "missao_estandes": {
+      "defaultValue": { "value": "E01,E03" },
+      "description": "IDs dos estandes em destaque, separados por vírgula (também aceita lista JSON).",
+      "valueType": "STRING"
+    },
+    "missao_titulo": {
+      "defaultValue": { "value": "Missão surpresa" },
+      "description": "Título da chamada exibida na tela inicial.",
+      "valueType": "STRING"
+    },
+    "missao_descricao": {
+      "defaultValue": { "value": "Visite os estandes em destaque e registre sua passagem pelo QR code." },
+      "description": "Texto de apoio da missão.",
+      "valueType": "STRING"
+    }
+  }
+}

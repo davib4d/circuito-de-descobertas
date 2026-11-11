@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR code do estande</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+      font-family: "Montserrat", system-ui, sans-serif; color: #3a2a5e; text-align: center;
+      background: linear-gradient(165deg, #b58df1, #9a6fe6);
+    }
+    main { background: #fff; border-radius: 36px; padding: 36px; width: min(560px, 100%); }
+    .selo { font-weight: 700; color: #9a6fe6; margin: 0 0 4px; }
+    h1 { font-size: 2rem; font-weight: 800; line-height: 1.15; margin: 0; }
+    .local { margin: 6px 0 22px; font-weight: 500; color: #75679a; }
+    .qr { background: #dff7e5; border-radius: 28px; padding: 22px; }
+    .qr svg { display: block; width: 100%; height: auto; border-radius: 12px; }
+    .passo { margin: 22px 0 0; font-weight: 700; }
+    .id { display: inline-block; margin-top: 10px; padding: 4px 18px; border-radius: 999px; background: #f3ecff; font-weight: 700; }
+    button {
+      margin-top: 22px; min-height: 48px; padding: 0 28px; border: 0; border-radius: 999px;
+      background: #f8736c; color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      main { border-radius: 0; width: 100%; }
+      button { display: none; }
+      .qr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="selo">Circuito de Descobertas</p>
+    <h1 id="nome">Estande</h1>
+    <p class="local" id="local"></p>
+    <div class="qr" id="qr"></div>
+    <p class="passo">Abra o app, toque em “Ler QR code” e aponte a câmera.</p>
+    <span class="id" id="id"></span>
+    <div><button type="button" onclick="window.print()">Imprimir</button></div>
+  </main>
+  <script>
+    const parametros = new URLSearchParams(location.search);
+    const id = parametros.get("id") ?? "";
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(id)) {
+      const qr = qrcode(0, "M");
+      qr.addData("circuito://estande/" + id);
+      qr.make();
+      document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 10, margin: 2, scalable: true });
+      document.getElementById("nome").textContent = parametros.get("nome") || "Estande " + id;
+      document.getElementById("local").textContent = parametros.get("local") ?? "";
+      document.getElementById("id").textContent = "Identificador " + id;
+      document.title = "QR code · " + (parametros.get("nome") || id);
+      if (parametros.get("imprimir") === "1") window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+    } else {
+      document.getElementById("nome").textContent = "Identificador de estande inválido";
+    }
+  </script>
+</body>
+</html>

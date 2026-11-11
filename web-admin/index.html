@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Circuito de Descobertas · Painel da organização</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Carregando -->
+  <main id="tela-carregando" class="tela ceu centro">
+    <div class="pulso" aria-hidden="true"></div>
+    <p class="claro">Conectando ao Firebase…</p>
+  </main>
+
+  <!-- Configuração ausente -->
+  <main id="tela-config" class="tela ceu centro" hidden>
+    <div class="cartao estreito">
+      <h1>Falta configurar o Firebase</h1>
+      <p>Abra <code>web-admin/firebase-config.js</code> e cole a configuração do app Web do seu projeto
+        (Console do Firebase → Configurações do projeto → Seus apps).</p>
+    </div>
+  </main>
+
+  <!-- Login -->
+  <main id="tela-login" class="tela ceu centro" hidden>
+    <svg class="nuvem n1" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+    <svg class="nuvem n2" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+    <svg class="nuvem n3" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+
+    <form id="form-login" class="login" novalidate>
+      <div class="selo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.6 6.2L21 9l-4.8 4.3L17.6 20 12 16.6 6.4 20l1.4-6.7L3 9l6.4-.8z"/></svg>
+      </div>
+      <h1>Circuito de<br>Descobertas</h1>
+      <p class="claro">Painel da organização do Amazon Hacking</p>
+
+      <label class="visualmente-oculto" for="login-email">E-mail</label>
+      <input id="login-email" class="pilula" type="email" placeholder="E-mail" autocomplete="username" required>
+      <label class="visualmente-oculto" for="login-senha">Senha</label>
+      <input id="login-senha" class="pilula" type="password" placeholder="Senha" autocomplete="current-password" required>
+
+      <p id="login-erro" class="erro-claro" role="alert" hidden></p>
+      <button class="botao branco" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <!-- Usuário sem permissão -->
+  <main id="tela-sem-acesso" class="tela ceu centro" hidden>
+    <div class="cartao estreito">
+      <h1>Conta sem acesso ao painel</h1>
+      <p>Este usuário ainda não foi autorizado como administrador. No Firestore, crie o documento
+        <code>admins/&lt;UID&gt;</code> usando o UID abaixo como ID do documento.</p>
+      <div class="linha-copia">
+        <code id="sem-acesso-uid"></code>
+        <button class="botao fantasma pequeno" id="btn-copiar-uid" type="button">Copiar UID</button>
+      </div>
+      <div class="acoes">
+        <button class="botao lilas" id="btn-recarregar" type="button">Verificar de novo</button>
+        <button class="botao fantasma" id="btn-sair-sem-acesso" type="button">Sair</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Painel -->
+  <div id="tela-painel" class="painel" hidden>
+    <aside class="lateral ceu">
+      <svg class="nuvem n1" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+      <svg class="nuvem n3" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+
+      <div class="marca">
+        <div class="selo pequeno" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.6 6.2L21 9l-4.8 4.3L17.6 20 12 16.6 6.4 20l1.4-6.7L3 9l6.4-.8z"/></svg>
+        </div>
+        <div>
+          <strong>Circuito de Descobertas</strong>
+          <span>Amazon Hacking</span>
+        </div>
+      </div>
+
+      <div class="placar">
+        <p class="placar-numero" id="total-checkins" aria-live="polite">0</p>
+        <p class="placar-rotulo">check-ins confirmados</p>
+      </div>
+
+      <dl class="resumo">
+        <div><dt>Estandes ativos</dt><dd id="total-ativos">0</dd></div>
+        <div><dt>Estandes cadastrados</dt><dd id="total-estandes">0</dd></div>
+        <div><dt>Visitantes com check-in</dt><dd id="total-visitantes">0</dd></div>
+      </dl>
+
+      <section class="missao">
+        <h2>Missão surpresa</h2>
+        <p>A missão é ligada no Remote Config. Marque os estandes em destaque e copie o valor para o parâmetro <code>missao_estandes</code>.</p>
+        <div id="missao-chips" class="chips"></div>
+        <div class="linha-copia escura">
+          <code id="missao-valor">—</code>
+          <button class="botao branco pequeno" id="btn-copiar-missao" type="button">Copiar</button>
+        </div>
+        <a id="link-remote-config" class="link-claro" target="_blank" rel="noopener">Abrir o Remote Config no console</a>
+      </section>
+
+      <div class="conta">
+        <span id="conta-email"></span>
+        <button class="botao contorno-claro pequeno" id="btn-sair" type="button">Sair</button>
+      </div>
+    </aside>
+
+    <main class="conteudo">
+      <header class="topo">
+        <div>
+          <h1>Estandes</h1>
+          <p class="suave">Os totais são calculados a partir dos check-ins gravados no Firestore e mudam sozinhos.</p>
+        </div>
+        <button class="botao coral" id="btn-novo" type="button">Cadastrar estande</button>
+      </header>
+
+      <div id="lista-estandes" class="lista"></div>
+
+      <div id="vazio" class="vazio" hidden>
+        <svg class="nuvem solta" viewBox="0 0 120 54" aria-hidden="true"><use href="#forma-nuvem"/></svg>
+        <h2>Nenhum estande cadastrado</h2>
+        <p class="suave">Cadastre o primeiro estande ou crie três estandes fictícios para testar o circuito.</p>
+        <button class="botao lilas" id="btn-exemplos" type="button">Criar 3 estandes de exemplo</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Formulário de estande -->
+  <dialog id="dlg-estande" class="dialogo">
+    <form id="form-estande" method="dialog" novalidate>
+      <h2 id="dlg-estande-titulo">Cadastrar estande</h2>
+
+      <label for="campo-id">Identificador</label>
+      <input id="campo-id" type="text" maxlength="40" pattern="[A-Za-z0-9_\-]{1,40}" required>
+      <p class="dica" id="dica-id">Vai dentro do QR code e no Remote Config. Não muda depois de salvo.</p>
+
+      <label for="campo-nome">Nome</label>
+      <input id="campo-nome" type="text" maxlength="80" required>
+
+      <label for="campo-descricao">Descrição breve</label>
+      <textarea id="campo-descricao" rows="3" maxlength="280"></textarea>
+
+      <label for="campo-localizacao">Localização</label>
+      <input id="campo-localizacao" type="text" maxlength="80" placeholder="Ex.: Corredor B, estande 12" required>
+
+      <label class="chave">
+        <input id="campo-ativo" type="checkbox" checked>
+        <span class="trilho" aria-hidden="true"></span>
+        <span>Estande ativo (aparece no app e aceita check-in)</span>
+      </label>
+
+      <p id="form-erro" class="erro" role="alert" hidden></p>
+
+      <div class="acoes">
+        <button class="botao fantasma" type="button" id="btn-cancelar-estande">Cancelar</button>
+        <button class="botao lilas" type="submit" id="btn-salvar-estande">Salvar estande</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- QR code -->
+  <dialog id="dlg-qr" class="dialogo qr">
+    <div id="qr-figura" class="qr-figura"></div>
+    <h2 id="qr-nome"></h2>
+    <p class="suave" id="qr-local"></p>
+    <p class="etiqueta" id="qr-id"></p>
+    <div class="acoes centro-acoes">
+      <a class="botao fantasma" id="qr-abrir" target="_blank" rel="noopener">Abrir em outra tela</a>
+      <a class="botao lilas" id="qr-imprimir" target="_blank" rel="noopener">Imprimir</a>
+    </div>
+    <button class="fechar" type="button" id="btn-fechar-qr" aria-label="Fechar">×</button>
+  </dialog>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="forma-nuvem" viewBox="0 0 120 54">
+        <path d="M14 54a14 14 0 0 1 0-28h6a20 20 0 0 1 38-8 24 24 0 0 1 44 12h4a12 12 0 0 1 0 24z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

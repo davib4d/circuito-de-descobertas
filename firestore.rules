@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // Administrador = usuário com documento em /admins/{uid}.
+    // Esse documento só pode ser criado pelo console do Firebase.
+    function admin() {
+      return autenticado()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function estandeValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nome', 'descricao', 'localizacao', 'ativo', 'criadoEm', 'atualizadoEm'])
+        && d.keys().hasAll(['nome', 'descricao', 'localizacao', 'ativo'])
+        && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 80
+        && d.descricao is string && d.descricao.size() <= 280
+        && d.localizacao is string && d.localizacao.size() > 0 && d.localizacao.size() <= 80
+        && d.ativo is bool;
+    }
+
+    match /admins/{uid} {
+      // O painel só precisa saber se o próprio usuário é administrador.
+      allow get: if autenticado() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    match /estandes/{estandeId} {
+      // Visitante lê um estande pelo ID somente se ele estiver ativo.
+      // "resource == null" permite descobrir que o ID não existe (QR inválido)
+      // sem expor estandes inativos, que retornam permission-denied.
+      allow get: if admin()
+        || (autenticado() && (resource == null || resource.data.ativo == true));
+
+      // Na listagem, o visitante precisa filtrar por ativo == true.
+      allow list: if admin()
+        || (autenticado() && resource.data.ativo == true);
+
+      allow create, update: if admin()
+        && estandeId.matches('^[A-Za-z0-9_-]{1,40}$')
+        && estandeValido();
+
+      // Estandes não são apagados: desative para preservar o histórico de check-ins.
+      allow delete: if false;
+    }
+
+    match /checkins/{checkinId} {
+      // ID composto visitante_estande: um check-in por visitante em cada estande.
+      allow create: if autenticado()
+        && request.resource.data.keys().hasOnly(['visitanteId', 'estandeId', 'criadoEm'])
+        && request.resource.data.visitanteId == request.auth.uid
+        && request.resource.data.estandeId is string
+        && checkinId == request.auth.uid + '_' + request.resource.data.estandeId
+        && request.resource.data.criadoEm == request.time
+        && exists(/databases/$(database)/documents/estandes/$(request.resource.data.estandeId))
+        && get(/databases/$(database)/documents/estandes/$(request.resource.data.estandeId)).data.ativo == true;
+
+      // O visitante consulta apenas os próprios check-ins; a organização consulta todos.
+      allow get: if admin()
+        || (autenticado() && (resource == null || resource.data.visitanteId == request.auth.uid));
+      allow list: if admin()
+        || (autenticado() && resource.data.visitanteId == request.auth.uid);
+
+      // Regravar um check-in existente seria um update: negado, então não há duplicata.
+      allow update, delete: if false;
+    }
+  }
+}
