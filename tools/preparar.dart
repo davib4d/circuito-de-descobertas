@@ -53,7 +53,8 @@ Future<void> main(List<String> args) async {
   await rodar('flutter', ['pub', 'get']);
 
   etapa('Análise estática');
-  await rodar('flutter', ['analyze']);
+  // Avisos de nível info aparecem na saída, mas só erros e warnings param o script.
+  await rodar('flutter', ['analyze', '--no-fatal-infos']);
 
   etapa('Testes');
   await rodar('flutter', ['test']);

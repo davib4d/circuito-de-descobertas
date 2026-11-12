@@ -61,14 +61,16 @@ como “Estande inativo”. Um ID que não existe volta como documento inexisten
 
 ## Passo a passo
 
-Pré-requisitos: Flutter 3.29 ou mais novo, Node.js (para a Firebase CLI) e um celular Android.
+Pré-requisitos: Flutter 3.47 ou mais novo, Android Studio (Android SDK e emulador), Node.js (para a
+Firebase CLI) e Git. Os comandos são rodados no terminal, a partir da raiz do repositório, salvo
+quando indicado.
 
 ### 1. Projeto no Firebase
 
 1. Crie o projeto em <https://console.firebase.google.com> **com o Google Analytics ativado**.
 2. **Authentication → Método de login**: ative **E-mail/senha** e **Anônimo**.
 3. **Firestore Database → Criar banco de dados** (modo de produção, qualquer região).
-4. Instale a CLI e selecione o projeto:
+4. No terminal, na raiz do repositório, instale a CLI e selecione o projeto:
 
 ```bash
 npm install -g firebase-tools
@@ -92,6 +94,9 @@ Se você entrar no painel antes de fazer o item 3, ele mostra o UID e o que falt
 
 ### 4. Painel web
 
+O painel é a parte da organização e roda no navegador; por isso é registrado no Firebase como app Web.
+O app Android é registrado separadamente, no passo 5.
+
 1. **Configurações do projeto → Seus apps → Web (`</>`)**: registre um app e copie a configuração.
 2. Cole em `web-admin/firebase-config.js`.
 3. Rode localmente:
@@ -110,23 +115,63 @@ No painel vazio há um botão **Criar 3 estandes de exemplo** (E01, E02 e E03).
 
 ### 5. App Flutter
 
-A partir da raiz do repositório:
+#### 5.1 Gerar a pasta Android e verificar o código
 
 ```bash
 dart tools/preparar.dart
 ```
 
 O script gera a pasta `app/android/` (se ainda não existir), baixa as dependências e roda
-`flutter analyze` e `flutter test`. Depois ligue o app ao projeto Firebase e rode no celular:
+`flutter analyze` e `flutter test`. Ele deve terminar em `=== Pronto ===`.
+
+#### 5.2 Ligar o app ao Firebase
 
 ```bash
 cd app
 dart pub global activate flutterfire_cli
 flutterfire configure --platforms=android
+```
+
+Escolha o projeto criado no passo 1. O comando registra o app Android no projeto e gera
+`lib/firebase_options.dart` e `android/app/google-services.json`.
+
+#### 5.3 Preparar um dispositivo
+
+O app roda em um celular Android ou no emulador do Android Studio.
+
+- **Emulador**: no Android Studio, **Device Manager → + → Create Virtual Device**, escolha um Pixel e uma
+  imagem de sistema **com Google Play** (necessária para entrar numa conta Google e receber convites do
+  App Distribution). Inicie o emulador pelo botão ▶ e espere a tela inicial do Android.
+- **Celular**: ative as **Opções do desenvolvedor → Depuração USB** e conecte pelo cabo.
+
+Confira se o dispositivo aparece:
+
+```bash
+flutter devices
+```
+
+#### 5.4 Rodar o app
+
+Ainda dentro de `app/`:
+
+```bash
 flutter run
 ```
 
-Os detalhes de cada etapa estão em `docs/android.md`.
+O Flutter instala e abre o app no dispositivo listado. Com o painel aberto, crie os estandes de exemplo:
+eles aparecem no app sem recarregar.
+
+#### Leitura de QR code no emulador
+
+A câmera do emulador é virtual. Há duas formas de mostrar um QR code a ela:
+
+- **Webcam do computador**: no Device Manager, edite o emulador (ícone de lápis) →
+  **Show Advanced Settings** → **Back camera: Webcam0**. Depois aponte a webcam para o QR impresso ou
+  aberto em outra tela.
+- **Imagem na cena virtual**: com o emulador aberto, **⋯ (Extended controls) → Camera** e escolha a
+  imagem do QR em **Wall**. Na câmera do app, segure Alt e mova o mouse para enquadrar a parede.
+
+Os detalhes da pasta Android e da assinatura estão em `docs/android.md`.
 
 ### 6. Remote Config
 
@@ -150,7 +195,8 @@ dart tools/preparar.dart apk
 
 Cria a chave de assinatura na primeira vez, gera o APK de release assinado em
 `app/build/app/outputs/flutter-apk/app-release.apk` e mostra o certificado. O envio para os testadores
-está na seção 5 de `docs/android.md`.
+está na seção 5 de `docs/android.md`. Para instalar pelo convite no emulador, entre no Gmail pelo
+Chrome do emulador com o e-mail do testador e permita a instalação de fontes desconhecidas para o Chrome.
 
 ### 8. Analytics
 
